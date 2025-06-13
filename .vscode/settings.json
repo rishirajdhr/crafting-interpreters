@@ -1,0 +1,6 @@
+{
+    "java.project.sourcePaths": [
+        "jlox/src"
+    ],
+    "java.project.referencedLibraries": []
+}
