@@ -10,6 +10,8 @@ import java.util.List;
  * for automating file authoring, not a part of the interpreter itself.
  */
 public class GenerateAst {
+    private static String indent = "    ";
+
     public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             System.err.println("Usage: generate_ast <output directory>");
@@ -34,6 +36,8 @@ public class GenerateAst {
         writer.println();
         writer.println("abstract class " + baseName + " {");
 
+        defineVisitor(writer, baseName, types);
+
         // The AST classes.
         for (String type : types) {
             String className = type.split(":")[0].trim();
@@ -41,12 +45,26 @@ public class GenerateAst {
             defineType(writer, baseName, className, fields);
         }
 
+        // The base accept() method.
+        writer.println();
+        writer.println(indent + "abstract <R> R accept(Visitor<R> visitor);");
+
         writer.println("}");
         writer.close();
     }
 
+    private static void defineVisitor(PrintWriter writer, String baseName, List<String> types) {
+        writer.println(indent + "interface Visitor<R> {");
+
+        for (String type : types) {
+            String typeName = type.split(":")[0].trim();
+            writer.println(indent + indent + "R visit" + typeName + baseName + "(" + typeName + " " + baseName.toLowerCase() + ");");
+        }
+
+        writer.println(indent + "}\n");
+    }
+
     private static void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
-        String indent = "    ";
         writer.println(indent + "static class " + className + " extends " + baseName + " {");
 
         //Fields
@@ -67,6 +85,14 @@ public class GenerateAst {
         }
 
         writer.println(indent + indent + "}");
+
+        // Visitor pattern
+        writer.println();
+        writer.println(indent + indent + "@Override");
+        writer.println(indent + indent + "<R> R accept(Visitor<R> visitor) {");
+        writer.println(indent + indent + indent + "return visitor.visit" + className + baseName + "(this);");
+        writer.println(indent + indent + "}");
+
         writer.println(indent + "}");
         writer.println();
     }
